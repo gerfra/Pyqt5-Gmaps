@@ -1,0 +1,189 @@
+<!-- FRANCESCO GERRATANA 2022 QT5 Gmaps embed Manipulation Exif GPS data -->
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta charset="utf-8" />
+  <title>Mappa</title>
+  <style>
+    #map {
+      height: 100%;
+    }
+
+    html,
+    body {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+    }
+
+    #description {
+      font-family: Roboto;
+      font-size: 15px;
+      font-weight: 300;
+    }
+
+    #infowindow-content .title {
+      font-weight: bold;
+    }
+
+    #infowindow-content {
+      display: none;
+    }
+
+    #map #infowindow-content {
+      display: inline;
+    }
+
+    .pac-card {
+      margin: 10px 10px 0 0;
+      border-radius: 2px 0 0 2px;
+      box-sizing: border-box;
+      -moz-box-sizing: border-box;
+      outline: none;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+      background-color: #fff;
+      font-family: Roboto;
+    }
+
+    #pac-container {
+      padding-bottom: 12px;
+      margin-right: 12px;
+    }
+
+    .pac-controls {
+      display: inline-block;
+      padding: 5px 11px;
+    }
+
+    .pac-controls label {
+      font-family: Roboto;
+      font-size: 13px;
+      font-weight: 300;
+    }
+
+    #map_point {
+      background-color: #000;
+      color:#4cff3c;
+      font-family: Roboto;
+      font-size: 18px;
+      font-weight: 300;
+      margin-left: 12px;
+      padding: 0 11px 0 13px;
+      text-overflow: ellipsis;
+      width: 400px;
+    }
+
+    #map_point:focus {
+      border-color: #4d90fe;
+    }
+
+    #title {
+      color: #fff;
+      background-color: #4d90fe;
+      font-size: 25px;
+      font-weight: 500;
+      padding: 6px 12px;
+    }
+
+    #target {
+      width: 345px;
+    }
+  </style>
+  <script src="js/qwebchannel.js"></script>
+  <script async src="https://maps.googleapis.com/maps/api/js?libraries=places,visualization&key=AIzaSyAqXCErWv3p2VdEmOUGyCaHbwvzTmHtILc&v=weekly&callback=initMap"></script>
+  <script>
+
+    new QWebChannel(qt.webChannelTransport, function (channel) {
+        window.evento = channel.objects.evento;
+        window.evento.jsObject = {
+            getPositionOfMarkers: getPositionOfMarkers
+        };
+    });
+
+    var button = document.createElement('button');
+    button.innerHTML = 'BUTTON';
+    button.style.backgroundColor = '#000';
+    button.style.color = '#fff';
+    button.style.border = '2px solid black';
+    button.style.padding = '8px 12px';
+
+
+    var map;
+    function initMap() {
+      var lat_lng = { lat: 41.8951173, lng: 12.50483840000004 };
+      map = new google.maps.Map(document.getElementById("map"), {
+        zoom: 10,
+        center: lat_lng,
+        mapTypeId: google.maps.MapTypeId.TERRAIN,
+      });
+      // This event listener will call addMarker() when the map is clicked.
+      map.addListener("click", function (event) {
+        addMarker(event.latLng);
+      });
+      //add button
+      map.controls[google.maps.ControlPosition.TOP_RIGHT].push(button);
+      //search autocomplete
+      var input = document.getElementById("map_point");
+      var autocomplete = new google.maps.places.Autocomplete(input);
+      map.controls[google.maps.ControlPosition.TOP_LEFT].push(input);
+      autocomplete.addListener("place_changed", function () {
+        var XlatLng = new google.maps.LatLng(
+          autocomplete.getPlace().geometry.location.lat(),
+          autocomplete.getPlace().geometry.location.lng()
+        );
+        addMarker(XlatLng);
+      });
+    }
+    var markers = [];
+    // Adds a marker to the map and push to the array.
+    function addMarker(location) {
+      var marker = new google.maps.Marker({
+        position: location,
+        map: map,
+      });
+      markers.push(marker);
+      for (var i = 0; i < markers.length; i++) {
+        if (markers[i].getPosition() != location) {
+          markers[i].setMap(null);
+          //Remove the marker from array.
+          markers.splice(i, 1);
+        }
+      }
+      map.panTo(location);
+      lat_long = location;
+      console.log(String.fromCharCode(13) + String.fromCharCode(13) + lat_long);
+      console.log(location.lat(),location.lng());
+      evento.mapclick(location.lat(),location.lng());
+    }
+
+
+
+function getPositionOfMarkers() {
+  var latlng = [];  // Crea un array vuoto per le posizioni
+  // Itera attraverso tutti i marker sulla mappa
+  for (var i = 0; i < markers.length; i++) {
+    // Estrae la posizione del marker
+    var position = markers[i].getPosition();
+    var lat = position.lat();
+    var lng = position.lng();
+    latlng.push(lat+","+lng);  // Aggiunge la posizione all'array
+  }
+  return latlng;  // Restituisce l'array contenente tutte le posizioni
+}
+button.addEventListener('click', function() {
+  var latlng = getPositionOfMarkers();  // Ottiene l'array contenente le posizioni
+  evento.getPositionOfMarkers(latlng);  // Emette il segnale con l'array come parametro
+});
+
+
+  </script>
+</head>
+
+<body>
+  <input id="map_point" class="controls" type="text" placeholder="Search Box" />
+  <div id="map"></div>
+</body>
+
+</html>
